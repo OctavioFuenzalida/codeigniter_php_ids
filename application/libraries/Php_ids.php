@@ -1,4 +1,7 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php
+
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
 
 /**
  * This PHPIDS library is free software; you can redistribute it and/or modify
@@ -23,7 +26,6 @@
  * @link            https://hg.jabo-solutions.eu/codeigniter-phpids-library
  * @description     Implementation of PHPIDS (http://php-ids.org): detect and react on intrusions
  */
-
 /**
  * PHP-IDS class
  *
@@ -45,9 +47,7 @@
  * and Lars H. Strojny. Also everyone involved in the CodeIgniter project from EllisLab Inc, are thanked, 
  * as well as the whole CodeIgniter community for making CodeIgniter such a success!
  */
-
-class Php_ids 
-{
+class Php_ids {
 
     private $CI;                // CodeIgniter instance
     private $init = NULL;       // The init object
@@ -58,20 +58,20 @@ class Php_ids
      *
      * @access      public
      */
-    public function __construct()
-    {
+
+    public function __construct() {
 
         // Ignite CI
-        $this->CI =& get_instance();
+        $this->CI = & get_instance();
 
         // Set debug log message
         log_message('debug', 'PHP-IDS Class Initialized');
 
         // Load config, helper, libraries and model
-		$this->CI->load->config('php_ids');
-		$this->CI->load->helper('url');
-		$this->CI->load->library('email');
-		$this->CI->load->library('session');
+        $this->CI->load->config('php_ids');
+        $this->CI->load->helper('url');
+        $this->CI->load->library('email');
+        $this->CI->load->library('session');
         $this->CI->load->model('php_ids_model');
 
         // Set some vars from the config file
@@ -87,7 +87,6 @@ class Php_ids
 
         // Initialize PHP-IDS
         $this->init();
-
     }
 
     /**
@@ -96,8 +95,7 @@ class Php_ids
      * @access      public
      * @return      boolean
      */
-    public function init()
-    {
+    public function init() {
 
         // Set include path for IDS and store old one
         $path = get_include_path();
@@ -108,15 +106,15 @@ class Php_ids
 
         // Add request url and user agent
         $_REQUEST['IDS_request_uri'] = $_SERVER['REQUEST_URI'];
-        if(isset($_SERVER['HTTP_USER_AGENT']) && $this->check_user_agent != FALSE)
+        if (isset($_SERVER['HTTP_USER_AGENT']) && $this->check_user_agent != FALSE)
         {
             $_REQUEST['IDS_user_agent'] = $_SERVER['HTTP_USER_AGENT'];
         }
 
         // Init the PHPIDS 
         $this->init = IDS_Init::init($this->ids_url . 'IDS/Config/Config.ini.php');
-        $ids        = new IDS_Monitor($_REQUEST, $this->init);
-        $result     = $ids->run();
+        $ids = new IDS_Monitor($_REQUEST, $this->init);
+        $result = $ids->run();
 
         // Re-set include path
         set_include_path($path);
@@ -127,15 +125,14 @@ class Php_ids
         }
 
         // Redirect after session kill
-        if($this->redirect == 1)
+        if ($this->redirect == 1)
         {
             redirect('/');
-        } 
-        else 
-        {    
+        }
+        else
+        {
             return TRUE;
         }
-
     }
 
     /**
@@ -147,8 +144,7 @@ class Php_ids
      * @param       IDS_Report $result
      * @return      boolean
      */
-    private function __react(IDS_Report $result)
-    {
+    private function __react(IDS_Report $result) {
 
         // Update session
         $new = $this->CI->session->userdata('ids_impact') + $result->getImpact();
@@ -158,50 +154,49 @@ class Php_ids
         // Log
         if ($impact >= $this->treshold['log'] && $this->treshold['log'] != 0)
         {
-	        $this->__log($result, $impact);
-        }	
+            $this->__log($result, $impact);
+        }
 
         // Warn the user
         if ($impact >= $this->treshold['warn'] && $this->treshold['warn'] != 0)
         {
-	        $this->__warn();
+            $this->__warn();
         }
 
         // Send an email alert
         if ($impact >= $this->treshold['mail'] && $this->treshold['mail'] != 0)
         {
-	        $this->__mail($result, $impact);
+            $this->__mail($result, $impact);
         }
 
         // Kill the session
         if ($impact >= $this->treshold['kill'] && $this->treshold['kill'] != 0)
         {
-	        $this->__kill();
+            $this->__kill();
         }
 
         // Disable the user's account 
         if ($impact >= $this->treshold['disable_account'] && $this->treshold['disable_account'] != 0)
         {
-            if($this->user_id > 0)
+            if ($this->user_id > 0)
             {
-	            $this->__disable_account($result, $impact);
+                $this->__disable_account($result, $impact);
             }
         }
 
         // Ban the IP
         if ($impact >= $this->treshold['ban_ip'] && $this->treshold['ban_ip'] != 0)
         {
-	        $this->__ban_ip($result, $impact);
+            $this->__ban_ip($result, $impact);
         }
 
         // Send a text alert
         if ($impact >= $this->treshold['text'] && $this->treshold['text'] != 0)
         {
-	        // TODO $this->__text($result);
+            // TODO $this->__text($result);
         }
 
         return TRUE;
-
     }
 
     /**
@@ -212,48 +207,45 @@ class Php_ids
      * @param       string $impact
      * @return      array $intrusion
      */
-    private function __intrusion(IDS_Report $result, $impact)
-    {
+    private function __intrusion(IDS_Report $result, $impact) {
 
-	    // Get description
+        // Get description
         foreach ($result as $event)
         {
 
             $description = '';
             $intrusion = '';
 
-	        // Get the tags	
-	        $tags = implode(", ",$event->getTags());
+            // Get the tags	
+            $tags = implode(", ", $event->getTags());
 
             // Set the description
-	        foreach ($event as $filter)
+            foreach ($event as $filter)
             {
-	            $description .= "Description: ".$filter->getDescription()." | ";
-	            $description .= "Tags: ".join(', ', $filter->getTags())." | ";
-	            $description .= "ID: ".$filter->getId()."<br />";
-		    }
+                $description .= "Description: " . $filter->getDescription() . " | ";
+                $description .= "Tags: " . join(', ', $filter->getTags()) . " | ";
+                $description .= "ID: " . $filter->getId() . "<br />";
+            }
 
             // Set data
             $intrusion = array(
-                'name'              => $event->getName(),
-                'value'             => htmlentities($event->getValue()),
-                'page'              => current_url(),
-                'tags'              => $tags,
-                'description'       => $description,
-                'user_id'           => $this->CI->session->userdata($this->user_id),
-                'user_ip'           => $this->CI->input->ip_address(),
-                'user_browser'      => $this->CI->input->user_agent(),
-                'session_id'        => $this->CI->session->userdata('session_id'),
-                'server_ip'         => $_SERVER['SERVER_ADDR'],
-                'event_impact'      => $event->getImpact(),
-                'session_impact'    => $impact,
-                'created'           => date('Y-m-d H:i:s')
+                'name' => $event->getName(),
+                'value' => htmlentities($event->getValue()),
+                'page' => current_url(),
+                'tags' => $tags,
+                'description' => $description,
+                'user_id' => $this->CI->session->userdata($this->user_id),
+                'user_ip' => $this->CI->input->ip_address(),
+                'user_browser' => $this->CI->input->user_agent(),
+                'session_id' => $this->CI->session->userdata('session_id'),
+                'server_ip' => $_SERVER['SERVER_ADDR'],
+                'event_impact' => $event->getImpact(),
+                'session_impact' => $impact,
+                'created' => date('Y-m-d H:i:s')
             );
-
         }
 
         return $intrusion;
-
     }
 
     /**
@@ -265,8 +257,7 @@ class Php_ids
      * @param       string $impact
      * @return      boolean
      */
-    private function __log($result, $impact)
-    {
+    private function __log($result, $impact) {
 
         // Set debug log message
         log_message('debug', 'PHP-IDS reaction: log');
@@ -278,7 +269,6 @@ class Php_ids
         $this->CI->php_ids_model->add_intrusion($data, $this->CI->config->item('intrusions_table'));
 
         return TRUE;
-
     }
 
     /**
@@ -287,8 +277,7 @@ class Php_ids
      * @access      private
      * @return      boolean
      */
-    private function __warn()
-    {
+    private function __warn() {
 
         // Set debug log message
         log_message('debug', 'PHP-IDS reaction: warn');
@@ -310,9 +299,7 @@ class Php_ids
          * }
          * ?>
          */
-
         return TRUE;
-
     }
 
     /**
@@ -323,8 +310,7 @@ class Php_ids
      * @param       string $impact
      * @return      boolean
      */
-    private function __mail($result, $impact)
-    {
+    private function __mail($result, $impact) {
 
         // Set debug log message
         log_message('debug', 'PHP-IDS reaction: email');
@@ -333,34 +319,33 @@ class Php_ids
         $data = $this->__intrusion($result, $impact);
 
         // Set message
-        $message  = "The following attack has been detected by PHPIDS<br /><br />";
-        $message .= "<strong>Name:</strong> ".$data['name']."<br />";
-        $message .= "<strong>Value:</strong> ".$data['value']."<br />";
-        $message .= "<strong>Page:</strong> ".$data['page']."<br />";
-        $message .= "<strong>Description:</strong><br />".$data['description'];
-        $message .= "<strong>User ID:</strong> ".$data['user_id']."<br />";
-        $message .= "<strong>User IP:</strong> ".$data['user_ip']."<br />";
-        $message .= "<strong>User browser:</strong> ".$data['user_browser']."<br />";
-        $message .= "<strong>Session ID:</strong> ".$data['session_id']."<br />";
-        $message .= "<strong>Server IP:</strong> ".$data['server_ip']."<br />";
-        $message .= "<strong>Event impact:</strong> ".$data['event_impact']."<br />";
-        $message .= "<strong>Session impact:</strong> ".$data['session_impact']."<br />";
-        $message .= "<strong>Date:</strong> ".$data['created']."<br />";
+        $message = "The following attack has been detected by PHPIDS<br /><br />";
+        $message .= "<strong>Name:</strong> " . $data['name'] . "<br />";
+        $message .= "<strong>Value:</strong> " . $data['value'] . "<br />";
+        $message .= "<strong>Page:</strong> " . $data['page'] . "<br />";
+        $message .= "<strong>Description:</strong><br />" . $data['description'];
+        $message .= "<strong>User ID:</strong> " . $data['user_id'] . "<br />";
+        $message .= "<strong>User IP:</strong> " . $data['user_ip'] . "<br />";
+        $message .= "<strong>User browser:</strong> " . $data['user_browser'] . "<br />";
+        $message .= "<strong>Session ID:</strong> " . $data['session_id'] . "<br />";
+        $message .= "<strong>Server IP:</strong> " . $data['server_ip'] . "<br />";
+        $message .= "<strong>Event impact:</strong> " . $data['event_impact'] . "<br />";
+        $message .= "<strong>Session impact:</strong> " . $data['session_impact'] . "<br />";
+        $message .= "<strong>Date:</strong> " . $data['created'] . "<br />";
 
         $this->CI->load->library('email');
         $this->CI->email->from($this->CI->config->item('email_address'), 'PHPIDS library');
         $this->CI->email->to($this->CI->config->item('email_address'));
-        $this->CI->email->subject('PHPIDS alert from server '.$data['server_ip']);
+        $this->CI->email->subject('PHPIDS alert from server ' . $data['server_ip']);
         $this->CI->email->message($message);
 
-        if(!$this->CI->email->send())
+        if (!$this->CI->email->send())
         {
             // Log error
             // TODO
         }
 
         return TRUE;
-
     }
 
     /**
@@ -371,8 +356,7 @@ class Php_ids
      * @param       string $impact
      * @return      boolean
      */
-    private function __disable_account(IDS_Report $result, $impact)
-    {
+    private function __disable_account(IDS_Report $result, $impact) {
 
         // Set debug log message
         log_message('debug', 'PHP-IDS reaction: disable account');
@@ -381,12 +365,7 @@ class Php_ids
         $intrusion = $this->__intrusion($result, $impact);
         $start = date('YmdHis');
         $end = date('YmdHis', mktime(
-            date("H") + $this->disabled_duration['hours'], 
-            date("i") + $this->disabled_duration['minutes'],     
-            date("s") + $this->disabled_duration['seconds'], 
-            date("m") + $this->disabled_duration['months'], 
-            date("d") + $this->disabled_duration['days'], 
-            date("Y") + $this->disabled_duration['years']
+                        date("H") + $this->disabled_duration['hours'], date("i") + $this->disabled_duration['minutes'], date("s") + $this->disabled_duration['seconds'], date("m") + $this->disabled_duration['months'], date("d") + $this->disabled_duration['days'], date("Y") + $this->disabled_duration['years']
         ));
 
         // Set data
@@ -401,7 +380,6 @@ class Php_ids
         $this->CI->php_ids_model->disable_account($data, $this->CI->config->item('disabled_table'));
 
         return TRUE;
-
     }
 
     /**
@@ -412,8 +390,7 @@ class Php_ids
      * @param       string $impact
      * @return      boolean
      */
-    private function __ban_ip(IDS_Report $result, $impact)
-    {
+    private function __ban_ip(IDS_Report $result, $impact) {
 
         // Set debug log message
         log_message('debug', 'PHP-IDS reaction: ban ip');
@@ -422,12 +399,7 @@ class Php_ids
         $intrusion = $this->__intrusion($result, $impact);
         $start = date('YmdHis');
         $end = date('YmdHis', mktime(
-            date("H") + $this->ban_duration['hours'], 
-            date("i") + $this->ban_duration['minutes'],     
-            date("s") + $this->ban_duration['seconds'], 
-            date("m") + $this->ban_duration['months'], 
-            date("d") + $this->ban_duration['days'], 
-            date("Y") + $this->ban_duration['years']
+                        date("H") + $this->ban_duration['hours'], date("i") + $this->ban_duration['minutes'], date("s") + $this->ban_duration['seconds'], date("m") + $this->ban_duration['months'], date("d") + $this->ban_duration['days'], date("Y") + $this->ban_duration['years']
         ));
 
         // Set data
@@ -442,7 +414,6 @@ class Php_ids
         $this->CI->php_ids_model->ban_ip($data, $this->CI->config->item('bans_table'));
 
         return TRUE;
-
     }
 
     /**
@@ -451,20 +422,18 @@ class Php_ids
      * @access      private
      * @return      boolean
      */
-    private function __kill()
-    {
+    private function __kill() {
 
         // Set debug log message
         log_message('debug', 'PHP-IDS reaction: kill');
 
-	    // Destroy this session to make sure the user is logged out
+        // Destroy this session to make sure the user is logged out
         $this->CI->session->sess_destroy();
 
         // Set redirect to TRUE
         $this->redirect = 1;
 
         return TRUE;
-
     }
 
     /**
@@ -473,8 +442,7 @@ class Php_ids
      * @access      private
      * @return      boolean
      */
-    private function __text()
-    {
+    private function __text() {
 
         // Set debug log message
         log_message('debug', 'PHP-IDS reaction: text');
@@ -482,7 +450,6 @@ class Php_ids
         // TODO: Plan is to use http://www.textmagic.com/ for this functionality.
 
         return TRUE;
-
     }
 
 }
